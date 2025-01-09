@@ -7,7 +7,7 @@ from django.shortcuts import HttpResponse, HttpResponseRedirect, render, redirec
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from .models import User, Email
-
+from django.contrib import messages
 
 def index(request):
     # Authenticated users view their inbox
@@ -127,9 +127,9 @@ def login_view(request):
     if request.method == "POST":
 
         # Attempt to sign user in
-        email = request.POST["email"]
+        username = request.POST["username"]
         password = request.POST["password"]
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, username=username, password=password)
 
         # Check if authentication successful
         if user is not None:
@@ -137,10 +137,30 @@ def login_view(request):
             return HttpResponseRedirect(reverse("index"))
         else:
             return render(request, "mail/login.html", {
-                "message": "Invalid email and/or password."
+                "message": "Invalid username and/or password."
             })
     else:
         return render(request, "mail/login.html")
+
+
+# def login_view(request):
+#     if request.method == "POST":
+
+#         # Attempt to sign user in
+#         email = request.POST["email"]
+#         password = request.POST["password"]
+#         user = authenticate(request, username=email, password=password)
+
+#         # Check if authentication successful
+#         if user is not None:
+#             login(request, user)
+#             return HttpResponseRedirect(reverse("index"))
+#         else:
+#             return render(request, "mail/login.html", {
+#                 "message": "Invalid email and/or password."
+#             })
+#     else:
+#         return render(request, "mail/login.html")
 
 
 def logout_view(request):
@@ -148,22 +168,57 @@ def logout_view(request):
     return HttpResponseRedirect(reverse("index"))
 
 
-def register(request):
-    if request.method == "POST":
-        email = request.POST["email"]
+# def register(request):
+#     if request.method == "POST":
+#         email = request.POST["email"]
 
-        # Ensure password matches confirmation
+#         # Ensure password matches confirmation
+#         password = request.POST["password"]
+#         confirmation = request.POST["confirmation"]
+
+
+#         if password != confirmation:
+#             return render(request, "mail/register.html", {
+#                 "message": "Passwords must match."
+#             })
+
+#         # Attempt to create new user
+#         try:
+#             user = User.objects.create_user(email, email, password)
+#             user.save()
+#         except IntegrityError as e:
+#             print(f"This is a print: ---- >>>  {e}")
+#             return render(request, "mail/register.html", {
+#                 "message": "Email address already taken."
+#             })
+#         login(request, user)
+#         return HttpResponseRedirect(reverse("index"))
+#     else:
+#         return render(request, "mail/register.html")
+
+
+def register(request):
+    if request.method == 'POST':
+        email = request.POST["email"]
+        username = request.POST['username']
         password = request.POST["password"]
         confirmation = request.POST["confirmation"]
+
+        if not username or not password or not confirmation or not email:
+            # messages.error(request, "All fields are required")
+            return render(request, 'mail/register.html', {
+                "message": "All fields are required"
+            })
+
         if password != confirmation:
             return render(request, "mail/register.html", {
                 "message": "Passwords must match."
             })
-
-        # Attempt to create new user
         try:
-            user = User.objects.create_user(email, email, password)
+            user = User.objects.create_user(username=username, password=password, email=email)
             user.save()
+            # login(request, user)         
+            # return HttpResponseRedirect(reverse("index"))
         except IntegrityError as e:
             print(f"This is a print: ---- >>>  {e}")
             return render(request, "mail/register.html", {
@@ -173,3 +228,4 @@ def register(request):
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "mail/register.html")
+
